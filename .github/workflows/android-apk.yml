@@ -46,8 +46,25 @@ jobs:
       - name: Compilar APK Operador
         working-directory: android
         run: |
+          set -o pipefail
           chmod +x gradlew
-          ./gradlew :app:assembleOperadorDebug
+          ./gradlew :app:assembleOperadorDebug --stacktrace --no-daemon 2>&1 | tee ../gradle-apk-build.log
+
+      - name: Relatar falha do Gradle
+        if: failure()
+        run: |
+          summary=$(grep -A 5 '^\* What went wrong:' gradle-apk-build.log | tr '\n' ' ' | cut -c1-180)
+          echo "::error title=Falha ao compilar APK::${summary:-Consulte o log Gradle anexado.}"
+          exit 1
+
+      - name: Anexar log do Gradle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChamaAi-Operador-Gradle-log
+          path: gradle-apk-build.log
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Publicar APK
         uses: actions/upload-artifact@v4
