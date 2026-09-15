@@ -1,0 +1,58 @@
+name: Gerar APK Android (Operador)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'android/**'
+      - 'capacitor.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/android-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-operador-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Gerar frontend e sincronizar Capacitor
+        run: |
+          npm run build
+          npx cap sync android
+
+      - name: Compilar APK Operador
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleOperadorDebug
+
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChamaAi-Operador-1.0.174-debug
+          path: android/app/build/outputs/apk/operador/debug/app-operador-debug.apk
+          if-no-files-found: error
+          retention-days: 30
