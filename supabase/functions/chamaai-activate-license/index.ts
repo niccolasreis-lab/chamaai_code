@@ -15,7 +15,11 @@ const allowedOriginsStr = Deno.env.get("ALLOWED_ADMIN_ORIGINS") || "";
 
 function getCorsHeaders(reqOrigin: string) {
   let allowedOrigin = "";
-  if (allowedOriginsStr === "*") {
+  // Electron empacotado usa origem file://; ela não pode ser pré-cadastrada
+  // como um domínio HTTP, mas precisa passar pelo preflight da função.
+  if (reqOrigin === "null" || reqOrigin.startsWith("file://")) {
+    allowedOrigin = reqOrigin;
+  } else if (allowedOriginsStr === "*") {
     allowedOrigin = "*";
   } else if (allowedOriginsStr) {
     const list = allowedOriginsStr.split(",").map(o => o.trim());
@@ -213,7 +217,13 @@ serve(async (req) => {
         status: license.status,
         plan: license.plan,
         modules: license.modules || {},
-        expires_at: license.expires_at
+        expires_at: license.expires_at,
+        product: {
+          id: license.product_id || null,
+          serial_version: license.serial_version || null,
+          latest_version: license.product_latest_version || null,
+          license_type: license.license_type || null
+        }
       },
       next_checkin_seconds: 3600
     }), {
