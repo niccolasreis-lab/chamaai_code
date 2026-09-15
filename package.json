@@ -1,7 +1,7 @@
 {
   "name": "chamaai-novo",
   "private": true,
-  "version": "1.0.175",
+  "version": "1.0.176",
   "main": "dist-electron/electron/main.js",
   "scripts": {
     "dev:vite": "vite --host",
