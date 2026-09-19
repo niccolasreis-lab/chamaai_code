@@ -65,8 +65,11 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { license_key, installation_id, app_version, db_version, hostname, local_ip } = body;
+    const normalizedLicenseKey = typeof license_key === 'string'
+      ? license_key.trim().replace(/\s+/g, '').toUpperCase()
+      : '';
 
-    if (!license_key || !installation_id) {
+    if (!normalizedLicenseKey || !installation_id) {
       return new Response(JSON.stringify({ error: 'license_key e installation_id são obrigatórios.' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -89,7 +92,7 @@ serve(async (req) => {
     const { data: license, error: licenseError } = await adminClient
       .from('licenses')
       .select('*')
-      .eq('license_key', license_key)
+      .ilike('license_key', normalizedLicenseKey)
       .single();
 
     if (licenseError || !license) {

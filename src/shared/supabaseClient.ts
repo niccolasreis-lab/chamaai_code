@@ -26,6 +26,7 @@ function getInstallationId(): string {
 }
 
 export async function validateLicense(serialCode: string): Promise<LicenseValidationResult> {
+  const normalizedKey = serialCode.trim().replace(/\s+/g, '').toUpperCase();
   try {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/chamaai-activate-license`, {
       method: 'POST',
@@ -34,7 +35,7 @@ export async function validateLicense(serialCode: string): Promise<LicenseValida
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        license_key: serialCode.trim(),
+        license_key: normalizedKey,
         installation_id: getInstallationId()
       })
     });
@@ -47,6 +48,14 @@ export async function validateLicense(serialCode: string): Promise<LicenseValida
 
     if (response.status === 404) {
       return { isValid: false, message: 'Serial inválido ou inexistente.' };
+    }
+
+    if (response.status === 403) {
+      return { isValid: false, message: data.error || 'Esta licença está inativa ou bloqueada no servidor.' };
+    }
+
+    if (response.status === 409) {
+      return { isValid: false, message: data.error || 'Esta licença ainda não está vinculada a uma loja.' };
     }
 
     return { isValid: false, message: data.error || 'Não foi possível validar a licença.' };

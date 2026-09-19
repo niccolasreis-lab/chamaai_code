@@ -81,11 +81,13 @@ export default function LicenseGate({ children }: LicenseGateProps) {
     setLoading(true);
     setError('');
 
-    const result = await validateLicense(serialCode.trim());
+    localStorage.removeItem('license_last_check');
+    const normalizedKey = serialCode.trim().replace(/\s+/g, '').toUpperCase();
+    const result = await validateLicense(normalizedKey);
 
     if (result.isValid) {
       const today = new Date().toLocaleDateString('sv-SE');
-      localStorage.setItem('app_license_key', serialCode.trim());
+      localStorage.setItem('app_license_key', normalizedKey);
       localStorage.setItem('license_last_check', today);
       localStorage.setItem('license_last_success', today);
       setIsLocked(false);
@@ -137,7 +139,7 @@ export default function LicenseGate({ children }: LicenseGateProps) {
             label="Serial Key"
             type="text"
             value={serialCode}
-            onChange={(e) => setSerialCode(e.target.value.toUpperCase())}
+            onChange={(e) => setSerialCode(e.target.value)}
             placeholder="XXXX-XXXX-XXXX-XXXX"
             leadingIcon={<KeyRound className="h-5 w-5" />}
             required
